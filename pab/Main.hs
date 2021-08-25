@@ -29,7 +29,12 @@ import           Plutus.PAB.Simulator                (SimulatorEffectHandlers)
 import qualified Plutus.PAB.Simulator                as Simulator
 import           Plutus.PAB.Types                    (PABError (..))
 import qualified Plutus.PAB.Webserver.Server         as PAB.Server
+import           Wallet.Emulator.Wallet              (Wallet (..))
 import           Plutus.Contracts.Game               as Game
+import           Vesting
+import           HelloWorld
+import           Registry
+
 
 main :: IO ()
 main = void $ Simulator.runSimulationWith handlers $ do
@@ -43,6 +48,9 @@ main = void $ Simulator.runSimulationWith handlers $ do
     -- That way, the simulation gets to a predefined state and you don't have to
     -- use the HTTP API for setup.
 
+    -- Spinning up Registry Contract on startup
+    void $ Simulator.activateContract (Wallet 1) RegistryContract
+
     -- Pressing enter results in the balances being printed
     void $ liftIO getLine
 
@@ -53,8 +61,12 @@ main = void $ Simulator.runSimulationWith handlers $ do
     shutdown
 
 data StarterContracts =
-    GameContract
+    GameContract |
+    -- VestingContract |
+    -- HelloWorldContract |
+    RegistryContract
     deriving (Eq, Ord, Show, Generic)
+    -- deriving anyclass (ToJSON, FromJSON)
 
 -- NOTE: Because 'StarterContracts' only has one constructor, corresponding to
 -- the demo 'Game' contract, we kindly ask aeson to still encode it as if it had
@@ -74,11 +86,20 @@ instance Pretty StarterContracts where
     pretty = viaShow
 
 instance Builtin.HasDefinitions StarterContracts where
-    getDefinitions = [GameContract]
+    getDefinitions = [GameContract, RegistryContract]
+    -- VestingContract, 
+    -- HelloWorldContract, 
+    
     getSchema =  \case
         GameContract -> Builtin.endpointsToSchemas @Game.GameSchema
+        -- VestingContract -> Builtin.endpointsToSchemas @Vesting.VestingSchema
+        -- HelloWorldContract -> Builtin.endpointsToSchemas @HelloWorld.HelloWorldSchema
+        RegistryContract -> Builtin.endpointsToSchemas @Registry.RegistrySchema
     getContract = \case
         GameContract -> SomeBuiltin (Game.game @ContractError)
+        -- VestingContract -> SomeBuiltin (Vesting.vesting @ContractError)
+        -- HelloWorldContract -> SomeBuiltin (HelloWorld.helloWorld @ContractError)
+        RegistryContract -> SomeBuiltin (Registry.registry @ContractError)
 
 handlers :: SimulatorEffectHandlers (Builtin StarterContracts)
 handlers =
