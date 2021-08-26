@@ -20,8 +20,8 @@
 
 module Registry (
     registry, 
-    createOrg, 
-    listOrg, 
+    createorg, 
+    listorg, 
     RegistrySchema,
     CreateOrgParams(..)) where
 
@@ -33,13 +33,17 @@ import qualified Prelude               as Haskell
 import qualified Ledger.Typed.Scripts  as Scripts
 import qualified Data.ByteString.Char8 as C
 import           PlutusTx.Prelude      hiding (pure, (<$>))
-import           Ledger                (ScriptContext)
+import           Ledger                (Address, Datum (Datum), ScriptContext, TxOutTx, Validator)
+import qualified Ledger
 import qualified Ledger.Constraints    as Constraints
 import qualified Ledger.Ada            as Ada
+import qualified Data.Map              as Map
+import           Data.Maybe            (catMaybes)
+import qualified Prelude               as Haskell
 
 type RegistrySchema = 
-    Endpoint "listOrg" ()
-    .\/ Endpoint "createOrg" CreateOrgParams
+    Endpoint "listorg" ()
+    .\/ Endpoint "createorg" CreateOrgParams
 
 data CreateOrgParams = CreateOrgParams {
         orgId :: Haskell.String,
@@ -55,7 +59,7 @@ instance Scripts.ValidatorTypes Registry where
     type instance DatumType Registry = HashedString
 
 
-newtype HashedString = HashedString BuiltinByteString deriving newtype (PlutusTx.ToData, PlutusTx.FromData, PlutusTx.UnsafeFromData)
+newtype HashedString = HashedString BuiltinByteString deriving newtype (PlutusTx.ToData, PlutusTx.FromData, PlutusTx.UnsafeFromData, Haskell.Show)
 
 PlutusTx.makeLift ''HashedString
 
@@ -78,19 +82,24 @@ validateOrgId (HashedString actual) _ _ = True -- TODO: Don't allow if the org I
 
 
 
-listOrg :: AsContractError e => Promise () RegistrySchema e ()
-listOrg = endpoint @"listOrg" @() $ \_ -> do
-    logInfo @Haskell.String "Listing Organization"
+listorg :: AsContractError e => Promise () RegistrySchema e ()
+listorg = endpoint @"listorg" @() $ \_ -> do
+    logInfo @Haskell.String "Listing Organization..."
+    utxos <- utxoAt registryAddress
+    -- let tx = collectFromScript utxos ()
+    let orgId = fromMaybe ( hashString "Not Found") (findOrg utxos)
+    logInfo  @Haskell.String $ "The orgId from on-chain is => " <> Haskell.show orgId <> "!!"
+    -- let log         <- logOrgIds orgIdList
+    let tx       = collectFromScript utxos ()
+    void (submitTxConstraintsSpending registryInstance utxos tx)
+
     -- TODO: Return the list of organizations 
 
 
--- create a data script for the Registry by hashing the string
--- and lifting the hash to its on-chain representation
-hashString :: Haskell.String -> HashedString
-hashString = HashedString . sha2_256 . toBuiltin . C.pack
 
-createOrg :: AsContractError e => Promise () RegistrySchema e ()
-createOrg = endpoint @"createOrg" @CreateOrgParams $ \(CreateOrgParams orgId orgName) -> do
+
+createorg :: AsContractError e => Promise () RegistrySchema e ()
+createorg = endpoint @"createorg" @CreateOrgParams $ \(CreateOrgParams orgId orgName) -> do
     logInfo @Haskell.String $ "Creating Organization with id: " <> Haskell.show  orgId <> "and name: " <> Haskell.show orgName <> "."
     let tx = Constraints.mustPayToTheScript  (hashString orgId) (Ada.lovelaceValueOf 1)
     void (submitTxConstraints registryInstance tx)
@@ -100,6 +109,36 @@ createOrg = endpoint @"createOrg" @CreateOrgParams $ \(CreateOrgParams orgId org
 registry :: AsContractError e => Contract () RegistrySchema e ()
 registry = do
     logInfo @Haskell.String "Intialized Registry Contract..."
-    selectList [listOrg, createOrg] >> registry
+    selectList [listorg, createorg] >> registry
+
+-- UTILS
+
+registryValidator :: Validator
+registryValidator = Scripts.validatorScript registryInstance
+
+registryAddress :: Address
+registryAddress = Ledger.scriptAddress registryValidator
+
+-- create a data script for the Registry by hashing the string
+-- and lifting the hash to its on-chain representation
+hashString :: Haskell.String -> HashedString
+hashString = HashedString . sha2_256 . toBuiltin . C.pack
 
 
+-- unhashString :: HashedString -> Haskell.String
+-- unhashString = fromBuiltinData . C.unpack
+
+
+findOrg :: UtxoMap -> Maybe HashedString
+findOrg = listToMaybe . catMaybes . Map.elems . Map.map  orgIdValue
+
+orgIdValue :: TxOutTx -> Maybe HashedString
+orgIdValue o = do
+  dh <- Ledger.txOutDatum $ Ledger.txOutTxOut o
+  Datum d <- Map.lookup dh $ Ledger.txData $ Ledger.txOutTxTx o
+  PlutusTx.fromBuiltinData d
+
+
+logOrgIds :: [HashedString] -> [Contract w0 s0 e0 ()]
+logOrgIds list = do
+     map logInfo $ map (\el -> ""<>Haskell.show el <> "") list
