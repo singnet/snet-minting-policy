@@ -122,7 +122,7 @@ registryAddress = Ledger.scriptAddress registryValidator
 -- create a data script for the Registry by hashing the string
 -- and lifting the hash to its on-chain representation
 hashString :: Haskell.String -> HashedString
-hashString = HashedString . sha2_256 . toBuiltin . C.pack
+hashString = HashedString . toBuiltin . C.pack
 
 
 -- unhashString :: HashedString -> Haskell.String
