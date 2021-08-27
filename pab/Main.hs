@@ -11,9 +11,7 @@
 module Main(main) where
 
 import           Control.Monad                       (void)
-import           Control.Monad.Freer                 (Eff, Member, interpret, type (~>))
-import           Control.Monad.Freer.Extras.Log      (LogMsg)
-import           Control.Monad.Freer.Error           (Error)
+import           Control.Monad.Freer                 (interpret)
 import           Control.Monad.IO.Class              (MonadIO (..))
 import           Data.Aeson                          (FromJSON (..), ToJSON (..), genericToJSON, genericParseJSON
                                                      , defaultOptions, Options(..))
@@ -21,15 +19,16 @@ import           Data.Default                        (def)
 import           Data.Text.Prettyprint.Doc           (Pretty (..), viaShow)
 import           GHC.Generics                        (Generic)
 import           Plutus.Contract                     (ContractError)
-import           Plutus.PAB.Effects.Contract         (ContractEffect (..))
 import           Plutus.PAB.Effects.Contract.Builtin (Builtin, SomeBuiltin (..), BuiltinHandler(contractHandler))
 import qualified Plutus.PAB.Effects.Contract.Builtin as Builtin
-import           Plutus.PAB.Monitoring.PABLogMsg     (PABMultiAgentMsg)
 import           Plutus.PAB.Simulator                (SimulatorEffectHandlers)
 import qualified Plutus.PAB.Simulator                as Simulator
-import           Plutus.PAB.Types                    (PABError (..))
 import qualified Plutus.PAB.Webserver.Server         as PAB.Server
+import           Wallet.Emulator.Wallet              (Wallet (..))
 import           Plutus.Contracts.Game               as Game
+import           Registry
+import           RegistryV2
+
 
 main :: IO ()
 main = void $ Simulator.runSimulationWith handlers $ do
@@ -43,6 +42,8 @@ main = void $ Simulator.runSimulationWith handlers $ do
     -- That way, the simulation gets to a predefined state and you don't have to
     -- use the HTTP API for setup.
 
+    -- Spinning up Registry Contract on startup
+    void $ Simulator.activateContract (Wallet 1) RegistryV2Contract
     -- Pressing enter results in the balances being printed
     void $ liftIO getLine
 
@@ -53,8 +54,13 @@ main = void $ Simulator.runSimulationWith handlers $ do
     shutdown
 
 data StarterContracts =
-    GameContract
+    GameContract |
+    -- VestingContract |
+    -- HelloWorldContract |
+    RegistryContract |
+    RegistryV2Contract
     deriving (Eq, Ord, Show, Generic)
+    -- deriving anyclass (ToJSON, FromJSON)
 
 -- NOTE: Because 'StarterContracts' only has one constructor, corresponding to
 -- the demo 'Game' contract, we kindly ask aeson to still encode it as if it had
@@ -74,11 +80,22 @@ instance Pretty StarterContracts where
     pretty = viaShow
 
 instance Builtin.HasDefinitions StarterContracts where
-    getDefinitions = [GameContract]
+    getDefinitions = [GameContract, RegistryContract, RegistryV2Contract]
+    -- VestingContract, 
+    -- HelloWorldContract, 
+    
     getSchema =  \case
         GameContract -> Builtin.endpointsToSchemas @Game.GameSchema
+        -- VestingContract -> Builtin.endpointsToSchemas @Vesting.VestingSchema
+        -- HelloWorldContract -> Builtin.endpointsToSchemas @HelloWorld.HelloWorldSchema
+        RegistryContract -> Builtin.endpointsToSchemas @Registry.RegistrySchema
+        RegistryV2Contract -> Builtin.endpointsToSchemas @RegistryV2.RegistryV2Schema
     getContract = \case
         GameContract -> SomeBuiltin (Game.game @ContractError)
+        -- VestingContract -> SomeBuiltin (Vesting.vesting @ContractError)
+        -- HelloWorldContract -> SomeBuiltin (HelloWorld.helloWorld @ContractError)
+        RegistryContract -> SomeBuiltin (Registry.registry @ContractError)
+        RegistryV2Contract -> SomeBuiltin (RegistryV2.registryV2 @ContractError)
 
 handlers :: SimulatorEffectHandlers (Builtin StarterContracts)
 handlers =
