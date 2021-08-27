@@ -39,7 +39,6 @@ import qualified Ledger.Constraints    as Constraints
 import qualified Ledger.Ada            as Ada
 import qualified Data.Map              as Map
 import           Data.Maybe            (catMaybes)
-import qualified Prelude               as Haskell
 
 type RegistrySchema = 
     Endpoint "listorg" ()

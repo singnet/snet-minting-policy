@@ -26,9 +26,8 @@ import qualified Plutus.PAB.Simulator                as Simulator
 import qualified Plutus.PAB.Webserver.Server         as PAB.Server
 import           Wallet.Emulator.Wallet              (Wallet (..))
 import           Plutus.Contracts.Game               as Game
-import           Vesting
-import           HelloWorld
 import           Registry
+import           RegistryV2
 
 
 main :: IO ()
@@ -44,8 +43,7 @@ main = void $ Simulator.runSimulationWith handlers $ do
     -- use the HTTP API for setup.
 
     -- Spinning up Registry Contract on startup
-    void $ Simulator.activateContract (Wallet 1) RegistryContract
-
+    void $ Simulator.activateContract (Wallet 1) RegistryV2Contract
     -- Pressing enter results in the balances being printed
     void $ liftIO getLine
 
@@ -59,7 +57,8 @@ data StarterContracts =
     GameContract |
     -- VestingContract |
     -- HelloWorldContract |
-    RegistryContract
+    RegistryContract |
+    RegistryV2Contract
     deriving (Eq, Ord, Show, Generic)
     -- deriving anyclass (ToJSON, FromJSON)
 
@@ -81,7 +80,7 @@ instance Pretty StarterContracts where
     pretty = viaShow
 
 instance Builtin.HasDefinitions StarterContracts where
-    getDefinitions = [GameContract, RegistryContract]
+    getDefinitions = [GameContract, RegistryContract, RegistryV2Contract]
     -- VestingContract, 
     -- HelloWorldContract, 
     
@@ -90,11 +89,13 @@ instance Builtin.HasDefinitions StarterContracts where
         -- VestingContract -> Builtin.endpointsToSchemas @Vesting.VestingSchema
         -- HelloWorldContract -> Builtin.endpointsToSchemas @HelloWorld.HelloWorldSchema
         RegistryContract -> Builtin.endpointsToSchemas @Registry.RegistrySchema
+        RegistryV2Contract -> Builtin.endpointsToSchemas @RegistryV2.RegistryV2Schema
     getContract = \case
         GameContract -> SomeBuiltin (Game.game @ContractError)
         -- VestingContract -> SomeBuiltin (Vesting.vesting @ContractError)
         -- HelloWorldContract -> SomeBuiltin (HelloWorld.helloWorld @ContractError)
         RegistryContract -> SomeBuiltin (Registry.registry @ContractError)
+        RegistryV2Contract -> SomeBuiltin (RegistryV2.registryV2 @ContractError)
 
 handlers :: SimulatorEffectHandlers (Builtin StarterContracts)
 handlers =
