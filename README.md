@@ -207,9 +207,9 @@ Follow the below steps to generate the input for `createorg` endpoint.
 > import Data.Aeson
 > import Data.ByteString.Lazy.Char8 as BSL
 > 
-> orgId’ = toByteStr “qwerty123”
-> orgName’ = toByteStr “Test Org”
-> orgOwner’ = Ledger.pubKeyHash $ walletPubKey $ Wallet 1
-> arg = OrganizationData {orgId = orgId’ , orgName = orgName’ , orgOwner = orgOwner’ }
+> orgId' = toByteStr "qwerty123"
+> orgName' = toByteStr "Test Org"
+> orgOwner' = Ledger.pubKeyHash $ walletPubKey $ Wallet 1
+> arg = OrganizationData {orgId = orgId' , orgName = orgName' , orgOwner = orgOwner' }
 > BSL.putStrLn $ encode args
 ```
