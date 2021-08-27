@@ -193,3 +193,23 @@ For more interactive discussion, you can join the [IOG Technical Community
 Discord](https://discord.gg/sSF5gmDBYg).
 
 Thanks!
+
+
+## Additional Info for local dev
+### Registry V2
+Follow the below steps to generate the input for `createorg` endpoint. 
+
+```
+> cabal repl
+> :l RegistryV2
+> import Ledger
+> import           Wallet.Emulator.Wallet              (Wallet (..), walletPubKey)
+> import Data.Aeson
+> import Data.ByteString.Lazy.Char8 as BSL
+> 
+> orgId’ = toByteStr “qwerty123”
+> orgName’ = toByteStr “Test Org”
+> orgOwner’ = Ledger.pubKeyHash $ walletPubKey $ Wallet 1
+> arg = OrganizationData {orgId = orgId’ , orgName = orgName’ , orgOwner = orgOwner’ }
+> BSL.putStrLn $ encode args
+```
