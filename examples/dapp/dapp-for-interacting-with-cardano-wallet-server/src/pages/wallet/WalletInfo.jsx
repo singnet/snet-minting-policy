@@ -56,7 +56,7 @@ const WalletInfo = () => {
     window.open(url, "_blank").focus();
   };
 
-  const converLoverlaceToAda = (loverlace) => {
+  const convertLovelacetoAda = (loverlace) => {
     const amount = round(loverlace / 1000000, 2);
     return `${amount} ₳`;
   };
@@ -123,18 +123,18 @@ const WalletInfo = () => {
             <div className="text-right">
               <div>
                 <h3 className="text-xl">
-                  Reward: {converLoverlaceToAda(wallet.balance.reward.quantity)}
+                  Reward: {convertLovelacetoAda(wallet.balance.reward.quantity)}
                 </h3>
               </div>
               <div>
                 <h3 className="text-xl">
                   Available:{" "}
-                  {converLoverlaceToAda(wallet.balance.available.quantity)}
+                  {convertLovelacetoAda(wallet.balance.available.quantity)}
                 </h3>
               </div>
               <div>
                 <h3 className="text-xl">
-                  Total: {converLoverlaceToAda(wallet.balance.total.quantity)}
+                  Total: {convertLovelacetoAda(wallet.balance.total.quantity)}
                 </h3>
               </div>
             </div>
@@ -221,12 +221,12 @@ const WalletInfo = () => {
                     </div>
                     <div className="mt-2">
                       Amount:{" "}
-                      {converLoverlaceToAda(
+                      {convertLovelacetoAda(
                         transaction.outputs[0].amount.quantity
                       )}
                     </div>
                     <div className="mt-2">
-                      Fee: {converLoverlaceToAda(transaction.fee.quantity)}
+                      Fee: {convertLovelacetoAda(transaction.fee.quantity)}
                     </div>
                   </div>
                   {transaction.metadata ? (
