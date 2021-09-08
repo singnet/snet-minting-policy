@@ -46,6 +46,8 @@ library
       Plutus.Contracts.Game
       Registry
       RegistryV2
+      OnChain.LockingScript
+      OnChain.MintingScript
     build-depends:
       base >= 4.9 && < 5,
       aeson,
@@ -57,6 +59,9 @@ library
       plutus-tx-plugin,
       plutus-tx,
       plutus-ledger,
+      serialise,
+      cardano-api,
+      plutus-ledger-api,
       text
     hs-source-dirs: src examples/src
 
@@ -96,3 +101,26 @@ executable plutus-starter-pab
     prettyprinter -any,
     freer-extras -any,
     plutus-ledger -any
+
+executable compile-into-plutus
+  import: lang
+  main-is: WritePlutus.hs
+  hs-source-dirs: pab
+  ghc-options:
+    -threaded
+  build-depends:
+    base >= 4.9 && <5,
+    data-default -any,
+    plutus-contract -any,
+    plutus-pab -any, 
+    plutus-starter -any, 
+    aeson -any, 
+    freer-simple -any, 
+    prettyprinter -any,
+    freer-extras -any, 
+    plutus-ledger -any,
+    cardano-api -any,
+    cardano-ledger-alonzo -any, 
+    plutus-ledger-api -any,
+    serialise -any
+
