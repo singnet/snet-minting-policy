@@ -8,7 +8,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Main (main) where
+module Main(main, writeCostingScripts) where
 
 import Control.Monad (void)
 import Control.Monad.Freer (interpret)
@@ -30,12 +30,15 @@ import Plutus.Contract (ContractError)
 import Plutus.Contracts.Game as Game
 import Plutus.PAB.Effects.Contract.Builtin (Builtin, BuiltinHandler (contractHandler), SomeBuiltin (..))
 import qualified Plutus.PAB.Effects.Contract.Builtin as Builtin
-import Plutus.PAB.Simulator (SimulatorEffectHandlers)
-import qualified Plutus.PAB.Simulator as Simulator
-import qualified Plutus.PAB.Webserver.Server as PAB.Server
 import Registry
 import RegistryV2
 import Wallet.Emulator.Wallet (Wallet (..))
+import           Plutus.PAB.Simulator                (SimulatorEffectHandlers)
+import qualified Plutus.PAB.Simulator                as Simulator
+import qualified Plutus.PAB.Webserver.Server         as PAB.Server
+import           Plutus.Contracts.Game               as Game
+import           Plutus.Trace.Emulator.Extract       (writeScriptsTo, ScriptsConfig (..), Command (..))
+import           Ledger.Index                        (ValidatorMode(..))
 
 main :: IO ()
 main = void $
@@ -61,6 +64,19 @@ main = void $
 
     shutdown
 
+-- | An example of computing the script size for a particular trace.
+-- Read more: <https://plutus.readthedocs.io/en/latest/plutus/howtos/analysing-scripts.html>
+writeCostingScripts :: IO ()
+writeCostingScripts = do
+  let config = ScriptsConfig { scPath = "/tmp/plutus-costing-outputs/", scCommand = cmd }
+      cmd    = Scripts { unappliedValidators = FullyAppliedValidators }
+      -- Note: Here you can use any trace you wish.
+      trace  = correctGuessTrace
+  (totalSize, exBudget) <- writeScriptsTo config "game" trace def
+  putStrLn $ "Total size = " <> show totalSize
+  putStrLn $ "ExBudget = " <> show exBudget
+
+
 data StarterContracts
   = GameContract
   | -- VestingContract |
@@ -70,8 +86,6 @@ data StarterContracts
   | SimpleMintingScriptContract
   | PrivateTokenContract
   deriving (Eq, Ord, Show, Generic)
-
--- deriving anyclass (ToJSON, FromJSON)
 
 -- NOTE: Because 'StarterContracts' only has one constructor, corresponding to
 -- the demo 'Game' contract, we kindly ask aeson to still encode it as if it had
