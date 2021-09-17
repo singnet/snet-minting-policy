@@ -1,8 +1,8 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 -- TODO: Ledger currently always supplies a redeemer while the plutus-repo's
 -- minting validator does not expect a redeemer. This needs to be rectified
@@ -10,35 +10,39 @@
 -- TODO: We should potentially parameterize the script creation
 
 module OnChain.MintingScript
-  ( apiExamplePlutusMintingScript
-  , mintingScriptShortBs
-  ) where
+  ( apiExamplePlutusMintingScript,
+    mintingScriptShortBs,
+    curSymbol,
+    scrAddress,
+  )
+where
 
-import           Prelude hiding (($))
-
-import           Cardano.Api.Shelley (PlutusScript (..), PlutusScriptV1)
-
-import           Codec.Serialise
+import Cardano.Api.Shelley (PlutusScript (..), PlutusScriptV1)
+import Codec.Serialise
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Short as SBS
-
-import           Ledger hiding (singleton)
+import Ledger hiding (singleton)
 import qualified Ledger.Typed.Scripts as Scripts
 import qualified PlutusTx
-import           PlutusTx.Prelude hiding (Semigroup (..), unless)
-
+import PlutusTx.Prelude hiding (Semigroup (..), unless)
+import Prelude hiding (($))
 
 {- HLINT ignore "Avoid lambda" -}
 
-{-# INLINABLE mkPolicy #-}
+{-# INLINEABLE mkPolicy #-}
 mkPolicy :: BuiltinData -> ScriptContext -> Bool
-mkPolicy _redeemer _ctx = True
-
+mkPolicy _ _ = True
 
 policy :: Scripts.MintingPolicy
-policy = mkMintingPolicyScript
-    $$(PlutusTx.compile [|| Scripts.wrapMintingPolicy mkPolicy ||])
+policy =
+  mkMintingPolicyScript
+    $$(PlutusTx.compile [||Scripts.wrapMintingPolicy mkPolicy||])
 
+curSymbol :: CurrencySymbol
+curSymbol = scriptCurrencySymbol policy
+
+scrAddress :: Address
+scrAddress = Ledger.scriptAddress validator
 
 plutusScript :: Script
 plutusScript =

@@ -1,37 +1,45 @@
-{-# LANGUAGE DataKinds          #-}
-{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE FlexibleContexts   #-}
-{-# LANGUAGE LambdaCase         #-}
-{-# LANGUAGE RankNTypes         #-}
-{-# LANGUAGE TypeApplications   #-}
-{-# LANGUAGE TypeFamilies       #-}
-{-# LANGUAGE TypeOperators      #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 
-module Main(main) where
+module Main (main) where
 
-import           Control.Monad                       (void)
-import           Control.Monad.Freer                 (interpret)
-import           Control.Monad.IO.Class              (MonadIO (..))
-import           Data.Aeson                          (FromJSON (..), ToJSON (..), genericToJSON, genericParseJSON
-                                                     , defaultOptions, Options(..))
-import           Data.Default                        (def)
-import           Data.Text.Prettyprint.Doc           (Pretty (..), viaShow)
-import           GHC.Generics                        (Generic)
-import           Plutus.Contract                     (ContractError)
-import           Plutus.PAB.Effects.Contract.Builtin (Builtin, SomeBuiltin (..), BuiltinHandler(contractHandler))
+import Control.Monad (void)
+import Control.Monad.Freer (interpret)
+import Control.Monad.IO.Class (MonadIO (..))
+import Data.Aeson
+  ( FromJSON (..),
+    Options (..),
+    ToJSON (..),
+    defaultOptions,
+    genericParseJSON,
+    genericToJSON,
+  )
+import Data.Default (def)
+import Data.Text.Prettyprint.Doc (Pretty (..), viaShow)
+import GHC.Generics (Generic)
+import OnChain.PrivateToken as PrivateToken
+import OnChain.SimpleMintingScript as SimpleMintingScript
+import Plutus.Contract (ContractError)
+import Plutus.Contracts.Game as Game
+import Plutus.PAB.Effects.Contract.Builtin (Builtin, BuiltinHandler (contractHandler), SomeBuiltin (..))
 import qualified Plutus.PAB.Effects.Contract.Builtin as Builtin
-import           Plutus.PAB.Simulator                (SimulatorEffectHandlers)
-import qualified Plutus.PAB.Simulator                as Simulator
-import qualified Plutus.PAB.Webserver.Server         as PAB.Server
-import           Wallet.Emulator.Wallet              (Wallet (..))
-import           Plutus.Contracts.Game               as Game
-import           Registry
-import           RegistryV2
-
+import Plutus.PAB.Simulator (SimulatorEffectHandlers)
+import qualified Plutus.PAB.Simulator as Simulator
+import qualified Plutus.PAB.Webserver.Server as PAB.Server
+import Registry
+import RegistryV2
+import Wallet.Emulator.Wallet (Wallet (..))
 
 main :: IO ()
-main = void $ Simulator.runSimulationWith handlers $ do
+main = void $
+  Simulator.runSimulationWith handlers $ do
     Simulator.logString @(Builtin StarterContracts) "Starting plutus-starter PAB webserver on port 8080. Press enter to exit."
     shutdown <- PAB.Server.startServerDebug
     -- Example of spinning up a game instance on startup
@@ -43,7 +51,7 @@ main = void $ Simulator.runSimulationWith handlers $ do
     -- use the HTTP API for setup.
 
     -- Spinning up Registry Contract on startup
-    void $ Simulator.activateContract (Wallet 1) RegistryV2Contract
+    void $ Simulator.activateContract (Wallet 1) PrivateTokenContract
     -- Pressing enter results in the balances being printed
     void $ liftIO getLine
 
@@ -53,14 +61,17 @@ main = void $ Simulator.runSimulationWith handlers $ do
 
     shutdown
 
-data StarterContracts =
-    GameContract |
-    -- VestingContract |
+data StarterContracts
+  = GameContract
+  | -- VestingContract |
     -- HelloWorldContract |
-    RegistryContract |
-    RegistryV2Contract
-    deriving (Eq, Ord, Show, Generic)
-    -- deriving anyclass (ToJSON, FromJSON)
+    RegistryContract
+  | RegistryV2Contract
+  | SimpleMintingScriptContract
+  | PrivateTokenContract
+  deriving (Eq, Ord, Show, Generic)
+
+-- deriving anyclass (ToJSON, FromJSON)
 
 -- NOTE: Because 'StarterContracts' only has one constructor, corresponding to
 -- the demo 'Game' contract, we kindly ask aeson to still encode it as if it had
@@ -70,35 +81,46 @@ data StarterContracts =
 --
 --    `... deriving anyclass (ToJSON, FromJSON)`
 instance ToJSON StarterContracts where
-  toJSON = genericToJSON defaultOptions {
-             tagSingleConstructors = True }
+  toJSON =
+    genericToJSON
+      defaultOptions
+        { tagSingleConstructors = True
+        }
+
 instance FromJSON StarterContracts where
-  parseJSON = genericParseJSON defaultOptions {
-             tagSingleConstructors = True }
+  parseJSON =
+    genericParseJSON
+      defaultOptions
+        { tagSingleConstructors = True
+        }
 
 instance Pretty StarterContracts where
-    pretty = viaShow
+  pretty = viaShow
 
 instance Builtin.HasDefinitions StarterContracts where
-    getDefinitions = [GameContract, RegistryContract, RegistryV2Contract]
-    -- VestingContract, 
-    -- HelloWorldContract, 
-    
-    getSchema =  \case
-        GameContract -> Builtin.endpointsToSchemas @Game.GameSchema
-        -- VestingContract -> Builtin.endpointsToSchemas @Vesting.VestingSchema
-        -- HelloWorldContract -> Builtin.endpointsToSchemas @HelloWorld.HelloWorldSchema
-        RegistryContract -> Builtin.endpointsToSchemas @Registry.RegistrySchema
-        RegistryV2Contract -> Builtin.endpointsToSchemas @RegistryV2.RegistryV2Schema
-    getContract = \case
-        GameContract -> SomeBuiltin (Game.game @ContractError)
-        -- VestingContract -> SomeBuiltin (Vesting.vesting @ContractError)
-        -- HelloWorldContract -> SomeBuiltin (HelloWorld.helloWorld @ContractError)
-        RegistryContract -> SomeBuiltin (Registry.registry @ContractError)
-        RegistryV2Contract -> SomeBuiltin (RegistryV2.registryV2 @ContractError)
+  getDefinitions = [GameContract, RegistryContract, RegistryV2Contract, SimpleMintingScriptContract, PrivateTokenContract]
+
+  -- VestingContract,
+  -- HelloWorldContract,
+
+  getSchema = \case
+    GameContract -> Builtin.endpointsToSchemas @Game.GameSchema
+    -- VestingContract -> Builtin.endpointsToSchemas @Vesting.VestingSchema
+    -- HelloWorldContract -> Builtin.endpointsToSchemas @HelloWorld.HelloWorldSchema
+    RegistryContract -> Builtin.endpointsToSchemas @Registry.RegistrySchema
+    RegistryV2Contract -> Builtin.endpointsToSchemas @RegistryV2.RegistryV2Schema
+    SimpleMintingScriptContract -> Builtin.endpointsToSchemas @SimpleMintingScript.MintingSchema
+    PrivateTokenContract -> Builtin.endpointsToSchemas @PrivateToken.MintingSchema
+  getContract = \case
+    GameContract -> SomeBuiltin (Game.game @ContractError)
+    -- VestingContract -> SomeBuiltin (Vesting.vesting @ContractError)
+    -- HelloWorldContract -> SomeBuiltin (HelloWorld.helloWorld @ContractError)
+    RegistryContract -> SomeBuiltin (Registry.registry @ContractError)
+    RegistryV2Contract -> SomeBuiltin (RegistryV2.registryV2 @ContractError)
+    SimpleMintingScriptContract -> SomeBuiltin (SimpleMintingScript.simpleMintingScript @ContractError)
+    PrivateTokenContract -> SomeBuiltin (PrivateToken.privateToken @ContractError)
 
 handlers :: SimulatorEffectHandlers (Builtin StarterContracts)
 handlers =
-    Simulator.mkSimulatorHandlers def def
-    $ interpret (contractHandler Builtin.handleBuiltin)
-
+  Simulator.mkSimulatorHandlers def def $
+    interpret (contractHandler Builtin.handleBuiltin)

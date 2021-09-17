@@ -48,6 +48,8 @@ library
       RegistryV2
       OnChain.LockingScript
       OnChain.MintingScript
+      OnChain.SimpleMintingScript
+      OnChain.PrivateToken 
     build-depends:
       base >= 4.9 && < 5,
       aeson,
