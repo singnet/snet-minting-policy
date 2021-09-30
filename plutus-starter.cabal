@@ -41,15 +41,16 @@ common lang
 library
     import: lang
     exposed-modules:
-      HelloWorld
-      Vesting
-      Plutus.Contracts.Game
-      Registry
-      RegistryV2
-      OnChain.LockingScript
-      OnChain.MintingScript
+      -- HelloWorld
+      -- Vesting
+      -- Plutus.Contracts.Game
+      -- Registry
+      -- RegistryV2
+      -- OnChain.LockingScript
+      -- OnChain.MintingScript
       OnChain.SimpleMintingScript
       OnChain.PrivateToken 
+      OnChain.MintingTokenWithOwner 
     build-depends:
       base >= 4.9 && < 5,
       aeson,
@@ -67,24 +68,24 @@ library
       text
     hs-source-dirs: src examples/src
 
-test-suite plutus-example-projects-test
-  import: lang
-  type: exitcode-stdio-1.0
-  main-is: Spec.hs
-  hs-source-dirs: examples/test
-  other-modules:
-    Spec.Game
-  build-depends:
-    plutus-tx -any,
-    plutus-tx-plugin,
-    plutus-contract -any,
-    plutus-ledger -any,
-    plutus-starter -any
-  build-depends:
-    base >=4.9 && <5,
-    tasty -any,
-    tasty-hunit -any,
-    tasty-hedgehog >=0.2.0.0
+-- test-suite plutus-example-projects-test
+--   import: lang
+--   type: exitcode-stdio-1.0
+--   main-is: Spec.hs
+--   hs-source-dirs: examples/test
+--   other-modules:
+--     Spec.Game
+--   build-depends:
+--     plutus-tx -any,
+--     plutus-tx-plugin,
+--     plutus-contract -any,
+--     plutus-ledger -any,
+--     plutus-starter -any
+--   build-depends:
+--     base >=4.9 && <5,
+--     tasty -any,
+--     tasty-hunit -any,
+--     tasty-hedgehog >=0.2.0.0
 
 executable plutus-starter-pab
   import: lang

@@ -8,7 +8,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Main(main, writeCostingScripts) where
+module Main(main) where
 
 import Control.Monad (void)
 import Control.Monad.Freer (interpret)
@@ -27,18 +27,18 @@ import GHC.Generics (Generic)
 import OnChain.PrivateToken as PrivateToken
 import OnChain.SimpleMintingScript as SimpleMintingScript
 import Plutus.Contract (ContractError)
-import Plutus.Contracts.Game as Game
 import Plutus.PAB.Effects.Contract.Builtin (Builtin, BuiltinHandler (contractHandler), SomeBuiltin (..))
 import qualified Plutus.PAB.Effects.Contract.Builtin as Builtin
-import Registry
-import RegistryV2
-import Wallet.Emulator.Wallet (Wallet (..))
+-- import Registry
+-- import RegistryV2
+import Wallet.Emulator.Wallet ( Wallet(Wallet), WalletId(..) )
 import           Plutus.PAB.Simulator                (SimulatorEffectHandlers)
 import qualified Plutus.PAB.Simulator                as Simulator
 import qualified Plutus.PAB.Webserver.Server         as PAB.Server
-import           Plutus.Contracts.Game               as Game
+-- import           Plutus.Contracts.Game               as Game
 import           Plutus.Trace.Emulator.Extract       (writeScriptsTo, ScriptsConfig (..), Command (..))
 import           Ledger.Index                        (ValidatorMode(..))
+
 
 main :: IO ()
 main = void $
@@ -54,7 +54,7 @@ main = void $
     -- use the HTTP API for setup.
 
     -- Spinning up Registry Contract on startup
-    void $ Simulator.activateContract (Wallet 1) PrivateTokenContract
+    -- void $ Simulator.activateContract (Wallet 1) PrivateTokenContract
     -- Pressing enter results in the balances being printed
     void $ liftIO getLine
 
@@ -66,24 +66,24 @@ main = void $
 
 -- | An example of computing the script size for a particular trace.
 -- Read more: <https://plutus.readthedocs.io/en/latest/plutus/howtos/analysing-scripts.html>
-writeCostingScripts :: IO ()
-writeCostingScripts = do
-  let config = ScriptsConfig { scPath = "/tmp/plutus-costing-outputs/", scCommand = cmd }
-      cmd    = Scripts { unappliedValidators = FullyAppliedValidators }
-      -- Note: Here you can use any trace you wish.
-      trace  = correctGuessTrace
-  (totalSize, exBudget) <- writeScriptsTo config "game" trace def
-  putStrLn $ "Total size = " <> show totalSize
-  putStrLn $ "ExBudget = " <> show exBudget
+-- writeCostingScripts :: IO ()
+-- writeCostingScripts = do
+--   let config = ScriptsConfig { scPath = "/tmp/plutus-costing-outputs/", scCommand = cmd }
+--       cmd    = Scripts { unappliedValidators = FullyAppliedValidators }
+--       -- Note: Here you can use any trace you wish.
+--       trace  = correctGuessTrace
+--   (totalSize, exBudget) <- writeScriptsTo config "game" trace def
+--   putStrLn $ "Total size = " <> show totalSize
+--   putStrLn $ "ExBudget = " <> show exBudget
 
 
 data StarterContracts
-  = GameContract
-  | -- VestingContract |
+    -- = GameContract
+    -- VestingContract |
     -- HelloWorldContract |
-    RegistryContract
-  | RegistryV2Contract
-  | SimpleMintingScriptContract
+    -- RegistryContract
+  -- | RegistryV2Contract
+  = SimpleMintingScriptContract
   | PrivateTokenContract
   deriving (Eq, Ord, Show, Generic)
 
@@ -112,25 +112,25 @@ instance Pretty StarterContracts where
   pretty = viaShow
 
 instance Builtin.HasDefinitions StarterContracts where
-  getDefinitions = [GameContract, RegistryContract, RegistryV2Contract, SimpleMintingScriptContract, PrivateTokenContract]
+  getDefinitions = [SimpleMintingScriptContract, PrivateTokenContract]
 
   -- VestingContract,
   -- HelloWorldContract,
 
   getSchema = \case
-    GameContract -> Builtin.endpointsToSchemas @Game.GameSchema
+    -- GameContract -> Builtin.endpointsToSchemas @Game.GameSchema
     -- VestingContract -> Builtin.endpointsToSchemas @Vesting.VestingSchema
     -- HelloWorldContract -> Builtin.endpointsToSchemas @HelloWorld.HelloWorldSchema
-    RegistryContract -> Builtin.endpointsToSchemas @Registry.RegistrySchema
-    RegistryV2Contract -> Builtin.endpointsToSchemas @RegistryV2.RegistryV2Schema
+    -- RegistryContract -> Builtin.endpointsToSchemas @Registry.RegistrySchema
+    -- RegistryV2Contract -> Builtin.endpointsToSchemas @RegistryV2.RegistryV2Schema
     SimpleMintingScriptContract -> Builtin.endpointsToSchemas @SimpleMintingScript.MintingSchema
     PrivateTokenContract -> Builtin.endpointsToSchemas @PrivateToken.MintingSchema
   getContract = \case
-    GameContract -> SomeBuiltin (Game.game @ContractError)
+    -- GameContract -> SomeBuiltin (Game.game @ContractError)
     -- VestingContract -> SomeBuiltin (Vesting.vesting @ContractError)
     -- HelloWorldContract -> SomeBuiltin (HelloWorld.helloWorld @ContractError)
-    RegistryContract -> SomeBuiltin (Registry.registry @ContractError)
-    RegistryV2Contract -> SomeBuiltin (RegistryV2.registryV2 @ContractError)
+    -- RegistryContract -> SomeBuiltin (Registry.registry @ContractError)
+    -- RegistryV2Contract -> SomeBuiltin (RegistryV2.registryV2 @ContractError)
     SimpleMintingScriptContract -> SomeBuiltin (SimpleMintingScript.simpleMintingScript @ContractError)
     PrivateTokenContract -> SomeBuiltin (PrivateToken.privateToken @ContractError)
 

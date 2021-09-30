@@ -35,6 +35,7 @@ import qualified Data.ByteString.Char8 as C
 import           PlutusTx.Prelude      hiding (pure, (<$>))
 import           Ledger                (Address, Datum (Datum), ScriptContext, TxOutTx, Validator)
 import qualified Ledger
+import           Ledger.AddressMap     ( UtxoMap )
 import qualified Ledger.Constraints    as Constraints
 import qualified Ledger.Ada            as Ada
 import qualified Data.Map              as Map

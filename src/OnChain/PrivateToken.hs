@@ -1,33 +1,41 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
 module OnChain.PrivateToken (privateToken, mint, MintingSchema, MintParams (..), curSymbol, serialisedScript) where
 
--- import Wallet.Emulator.Wallet (walletAddress, walletPrivKey, walletPubKey)
-
-import Cardano.Api.Shelley (PlutusScript (..), PlutusScriptV1)
+import Cardano.Api hiding (Address)
+import Cardano.Api.Shelley (PlutusScript (..))
 import Codec.Serialise
 import Control.Monad
-import Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as C
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString.Short as SBS
 import Data.Void
-import Ledger hiding (mint, singleton)
+import Ledger
+  ( Address,
+    PubKeyHash (..),
+    ScriptContext (scriptContextTxInfo),
+    Validator (Validator),
+    mkMintingPolicyScript,
+    scriptAddress,
+    scriptCurrencySymbol,
+    txId,
+    txSignedBy,
+    unMintingPolicyScript,
+  )
 import qualified Ledger.Constraints as Constraints
 import qualified Ledger.Typed.Scripts as Scripts
 import Ledger.Value as Value
 import Playground.Contract
 import Plutus.Contract as Contract
-import Plutus.V1.Ledger.Bytes (bytes, fromBytes)
 import qualified PlutusTx
 import PlutusTx.Prelude hiding (Semigroup (..), unless)
-import Wallet.Emulator.Wallet (walletPubKey)
-import Prelude hiding (($))
+import PlutusTx.Prelude as PlutusTx
+import Prelude hiding (($), (<>))
 
 -- Minting Policy:
 -- The currency symbol is the hash of this script.
@@ -44,7 +52,7 @@ policy =
 curSymbol :: CurrencySymbol
 curSymbol = scriptCurrencySymbol policy
 
--- START : only for cli
+-- START : only for .plutus compilation
 policyValidator :: Validator
 policyValidator = Validator $ unMintingPolicyScript policy
 
@@ -57,7 +65,7 @@ scriptAsCbor = serialise policyValidator
 serialisedScript :: PlutusScript PlutusScriptV1
 serialisedScript = PlutusScriptSerialised . SBS.toShort $ LB.toStrict scriptAsCbor
 
--- END : only for cli
+-- END : only for .plutus compilation
 
 data MintParams = MintParams
   { mpTokenName :: TokenName,
@@ -68,23 +76,7 @@ data MintParams = MintParams
 type MintingSchema = Endpoint "mint" MintParams
 
 owner :: PubKeyHash
-owner = pubKeyHash ownerPubKey
-
--- owner = PubKeyHash . toBuiltin . C.pack $ "ec8c7d111c04761ef362a0036d36893e7f04adde4afd5ea3e1e85914"
--- owner = PubKeyHash . toBuiltin . C.pack $ "acct_vk1tzpcn30n20dxmunenzuxfcg7m3p3ax3rvzfgefslhph8r5ppp0eqgee4vk"
-
-ownerPubKey :: PubKey
-ownerPubKey = PubKey . fromBytes . C.pack $ "acct_vk1tzpcn30n20dxmunenzuxfcg7m3p3ax3rvzfgefslhph8r5ppp0eqgee4vk"
--- ownerPubKey = walletPubKey (Wallet 1)
-
-ownerString :: String
-ownerString = C.unpack . bytes . getPubKey $ ownerPubKey
-
--- ownerPrivateKey :: PrivateKey
--- ownerPrivateKey = walletPrivKey (Wallet 1)
-
--- ownerAddress :: Address
--- ownerAddress = walletAddress (Wallet 1)
+owner = "88d3ff2343305de1177081ce211fa7610c617f767b1f05f440dde1d2" :: PubKeyHash
 
 mint :: AsContractError e => Promise () MintingSchema e ()
 mint = endpoint @"mint" @MintParams $ \(MintParams tknName amount) -> do
@@ -97,17 +89,11 @@ mint = endpoint @"mint" @MintParams $ \(MintParams tknName amount) -> do
   --   value is positive
   ledgerTx <- submitTxConstraintsWith @Void lookups tx
   void $ awaitTxConfirmed $ txId ledgerTx
-  logInfo @String $ "Owner => " <> show owner <> "."
-  logInfo @String $ "Currency Symbol => " <> show curSymbol <> "."
   logInfo @String $ "forged => " <> show val <> " " <> show tknName <> "."
 
 privateToken :: AsContractError e => Contract () MintingSchema e ()
 privateToken = do
   logInfo @String $ "Owner Pub Key Hash=> " <> show owner <> "."
-  logInfo @String $ "Owner Pub Key=> " <> show ownerPubKey <> "."
-  -- logInfo @String $ "Owner Priv Key=> " <> show ownerPrivateKey <> "."
-  -- logInfo @String $ "Owner Address => " <> show ownerAddress <> "."
   logInfo @String $ "Currency Symbol => " <> show curSymbol <> "."
-  logInfo @String $ "Owner string => " <> show ownerString <> "."
   logInfo @String "Initialized Private Script"
   selectList [mint] >> privateToken
