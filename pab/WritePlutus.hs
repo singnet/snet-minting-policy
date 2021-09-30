@@ -5,10 +5,13 @@ import qualified Cardano.Ledger.Alonzo.Data as Alonzo
 --   ( apiExampleUntypedPlutusLockingScript,
 --     untypedLockingScriptAsShortBs,
 --   )
-import OnChain.MintingScript (apiExamplePlutusMintingScript)
+-- import OnChain.MintingScript (apiExamplePlutusMintingScript, curSymbol)
+-- import OnChain.SimpleMintingScript (serialisedScript)
+-- import OnChain.PrivateToken (serialisedScript, curSymbol)
+import OnChain.MintingTokenWithOwner (apiExamplePlutusMintingScript)
 import qualified Plutus.V1.Ledger.Api as Plutus
+import System.Environment
 import Prelude
-import System.Environment 
 
 writePlutusScript :: FilePath -> IO ()
 writePlutusScript filename = do
@@ -21,6 +24,7 @@ main :: IO ()
 main = do
   args <- getArgs
   let argsLen = length args
-  let filename = if argsLen > 0 then head args else "result.plutus"
+  let filename = if argsLen > 0 then head args else "token-with-owner.plutus"
   putStrLn $ "Writing output to " ++ filename
   writePlutusScript filename
+  putStrLn "Successfully written"
