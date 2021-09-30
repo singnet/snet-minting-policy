@@ -10,6 +10,7 @@ import Prelude
 
 createPlutusScript :: PubKeyHash -> String -> IO ()
 createPlutusScript owner filename = do
+  putStrLn $ "owner => " ++ (show owner)
   result <- writeFileTextEnvelope filename Nothing (serialisedScript owner)
   case result of
     Left err -> putStrLn $ displayError err
