@@ -6,7 +6,16 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
-module OnChain.PrivateToken (privateToken, mint, MintingSchema, MintParams (..), curSymbol, serialisedScript) where
+module OnChain.PrivateToken
+  ( 
+    -- privateToken,
+    -- mint,
+    MintingSchema,
+    MintParams (..),
+    curSymbol,
+    serialisedScript,
+  )
+where
 
 import Cardano.Api hiding (Address)
 import Cardano.Api.Shelley (PlutusScript (..))
@@ -43,27 +52,27 @@ import Prelude hiding (($), (<>))
 mkPolicy :: PubKeyHash -> () -> ScriptContext -> Bool
 mkPolicy pkh () ctx = txSignedBy (scriptContextTxInfo ctx) pkh
 
-policy :: Scripts.MintingPolicy
-policy =
+policy :: PubKeyHash -> Scripts.MintingPolicy
+policy owner =
   mkMintingPolicyScript $
     $$(PlutusTx.compile [||Scripts.wrapMintingPolicy . mkPolicy||])
       `PlutusTx.applyCode` (PlutusTx.liftCode owner)
 
-curSymbol :: CurrencySymbol
-curSymbol = scriptCurrencySymbol policy
+curSymbol :: PubKeyHash -> CurrencySymbol
+curSymbol = scriptCurrencySymbol . policy
 
 -- START : only for .plutus compilation
-policyValidator :: Validator
-policyValidator = Validator $ unMintingPolicyScript policy
+policyValidator :: PubKeyHash -> Validator
+policyValidator owner = Validator $ unMintingPolicyScript $ policy owner
 
-policyScriptAddress :: Address
-policyScriptAddress = Ledger.scriptAddress policyValidator
+policyScriptAddress :: PubKeyHash -> Address
+policyScriptAddress = Ledger.scriptAddress . policyValidator
 
-scriptAsCbor :: LB.ByteString
-scriptAsCbor = serialise policyValidator
+scriptAsCbor :: PubKeyHash -> LB.ByteString
+scriptAsCbor = serialise . policyValidator
 
-serialisedScript :: PlutusScript PlutusScriptV1
-serialisedScript = PlutusScriptSerialised . SBS.toShort $ LB.toStrict scriptAsCbor
+serialisedScript :: PubKeyHash -> PlutusScript PlutusScriptV1
+serialisedScript owner = PlutusScriptSerialised . SBS.toShort $ LB.toStrict $ scriptAsCbor owner
 
 -- END : only for .plutus compilation
 
@@ -75,25 +84,25 @@ data MintParams = MintParams
 
 type MintingSchema = Endpoint "mint" MintParams
 
-owner :: PubKeyHash
-owner = "88d3ff2343305de1177081ce211fa7610c617f767b1f05f440dde1d2" :: PubKeyHash
+-- owner :: PubKeyHash
+-- owner = "b4ddb46e5c9eff21ecfbe426feec1ae54712f16f31e993742a804030"
 
-mint :: AsContractError e => Promise () MintingSchema e ()
-mint = endpoint @"mint" @MintParams $ \(MintParams tknName amount) -> do
-  let val = Value.singleton curSymbol tknName amount
-      lookups = Constraints.mintingPolicy policy
-      tx = Constraints.mustMintValue val
-  --   The Below line will automatically find an input in the wallet
-  --   to cover the fees.
-  --   It will also, transfer the minted amount to the wallet if the
-  --   value is positive
-  ledgerTx <- submitTxConstraintsWith @Void lookups tx
-  void $ awaitTxConfirmed $ txId ledgerTx
-  logInfo @String $ "forged => " <> show val <> " " <> show tknName <> "."
+-- mint :: AsContractError e => Promise () MintingSchema e ()
+-- mint = endpoint @"mint" @MintParams $ \(MintParams tknName amount) -> do
+--   let val = Value.singleton curSymbol tknName amount
+--       lookups = Constraints.mintingPolicy policy
+--       tx = Constraints.mustMintValue val
+--   --   The Below line will automatically find an input in the wallet
+--   --   to cover the fees.
+--   --   It will also, transfer the minted amount to the wallet if the
+--   --   value is positive
+--   ledgerTx <- submitTxConstraintsWith @Void lookups tx
+--   void $ awaitTxConfirmed $ txId ledgerTx
+--   logInfo @String $ "forged => " <> show val <> " " <> show tknName <> "."
 
-privateToken :: AsContractError e => Contract () MintingSchema e ()
-privateToken = do
-  logInfo @String $ "Owner Pub Key Hash=> " <> show owner <> "."
-  logInfo @String $ "Currency Symbol => " <> show curSymbol <> "."
-  logInfo @String "Initialized Private Script"
-  selectList [mint] >> privateToken
+-- privateToken :: AsContractError e => Contract () MintingSchema e ()
+-- privateToken = do
+--   logInfo @String $ "Owner Pub Key Hash=> " <> show owner <> "."
+--   logInfo @String $ "Currency Symbol => " <> show curSymbol <> "."
+--   logInfo @String "Initialized Private Script"
+--   selectList [mint] >> privateToken

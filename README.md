@@ -1,3 +1,11 @@
+# Notes for SNET
+## Create a Plutus Script with Owner PubKeyHash
+- Setup the application using devcontainer / Nix with the steps available below
+- Build the haskell files
+  - `cabal build`
+- Run the cabal command to create `.plutus` script from the Private Minting policy. Pass the Public key hash of the owner and the output filename as arguments. 
+  - `cabal run create-private-minting-policy "b4ddb46e5c9eff21_sample_pub_key_hash_e993742a804030" "agi-token-policy.plutus"`
+
 # Plutus Platform starter project
 
 This project gives a simple starter project for using the Plutus Platform.
@@ -220,3 +228,5 @@ Follow the below steps to generate the input for `createorg` endpoint.
 > arg = OrganizationData {orgId = orgId’ , orgName = orgName’ , orgOwner = orgOwner’ }
 > BSL.putStrLn $ encode args
 ```
+
+

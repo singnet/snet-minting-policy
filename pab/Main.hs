@@ -84,7 +84,7 @@ data StarterContracts
     -- RegistryContract
   -- | RegistryV2Contract
   = SimpleMintingScriptContract
-  | PrivateTokenContract
+  -- | PrivateTokenContract
   deriving (Eq, Ord, Show, Generic)
 
 -- NOTE: Because 'StarterContracts' only has one constructor, corresponding to
@@ -112,7 +112,7 @@ instance Pretty StarterContracts where
   pretty = viaShow
 
 instance Builtin.HasDefinitions StarterContracts where
-  getDefinitions = [SimpleMintingScriptContract, PrivateTokenContract]
+  getDefinitions = [SimpleMintingScriptContract]
 
   -- VestingContract,
   -- HelloWorldContract,
@@ -124,7 +124,7 @@ instance Builtin.HasDefinitions StarterContracts where
     -- RegistryContract -> Builtin.endpointsToSchemas @Registry.RegistrySchema
     -- RegistryV2Contract -> Builtin.endpointsToSchemas @RegistryV2.RegistryV2Schema
     SimpleMintingScriptContract -> Builtin.endpointsToSchemas @SimpleMintingScript.MintingSchema
-    PrivateTokenContract -> Builtin.endpointsToSchemas @PrivateToken.MintingSchema
+    -- PrivateTokenContract -> Builtin.endpointsToSchemas @PrivateToken.MintingSchema
   getContract = \case
     -- GameContract -> SomeBuiltin (Game.game @ContractError)
     -- VestingContract -> SomeBuiltin (Vesting.vesting @ContractError)
@@ -132,7 +132,7 @@ instance Builtin.HasDefinitions StarterContracts where
     -- RegistryContract -> SomeBuiltin (Registry.registry @ContractError)
     -- RegistryV2Contract -> SomeBuiltin (RegistryV2.registryV2 @ContractError)
     SimpleMintingScriptContract -> SomeBuiltin (SimpleMintingScript.simpleMintingScript @ContractError)
-    PrivateTokenContract -> SomeBuiltin (PrivateToken.privateToken @ContractError)
+    -- PrivateTokenContract -> SomeBuiltin (PrivateToken.privateToken @ContractError)
 
 handlers :: SimulatorEffectHandlers (Builtin StarterContracts)
 handlers =
