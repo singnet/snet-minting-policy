@@ -51,6 +51,7 @@ library
       OnChain.SimpleMintingScript
       OnChain.PrivateToken 
       OnChain.MintingTokenWithOwner 
+      StakingContract.StakingV1
     build-depends:
       base >= 4.9 && < 5,
       aeson,
@@ -68,24 +69,29 @@ library
       text
     hs-source-dirs: src examples/src
 
--- test-suite plutus-example-projects-test
---   import: lang
---   type: exitcode-stdio-1.0
---   main-is: Spec.hs
---   hs-source-dirs: examples/test
---   other-modules:
---     Spec.Game
---   build-depends:
---     plutus-tx -any,
---     plutus-tx-plugin,
---     plutus-contract -any,
---     plutus-ledger -any,
---     plutus-starter -any
---   build-depends:
---     base >=4.9 && <5,
---     tasty -any,
---     tasty-hunit -any,
---     tasty-hedgehog >=0.2.0.0
+test-suite plutus-example-projects-test
+  import: lang
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs: examples/test
+  other-modules:
+    Spec.StakingV1Trace
+  build-depends:
+    plutus-tx -any,
+    plutus-tx-plugin,
+    plutus-contract -any,
+    plutus-ledger -any,
+    plutus-starter -any,
+    freer-extras,
+    containers,
+    lens,
+    data-default
+  build-depends:
+    base >=4.9 && <5,
+    tasty -any,
+    tasty-hunit -any,
+    tasty-hedgehog >=0.2.0.0
+
 
 executable plutus-starter-pab
   import: lang
