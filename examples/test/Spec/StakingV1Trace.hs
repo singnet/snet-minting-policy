@@ -44,13 +44,13 @@ tests = checkPredicateOptions
     "service execution trace"
     (    walletFundsChange
           (findWallet 1)
-          (Ada.lovelaceValueOf 10_000_000 <> assetClassValue token (-60))
-    .&&. walletFundsChange
-             (findWallet 2)
-             (Ada.lovelaceValueOf (-20_000_000) <> assetClassValue token 20)
-    .&&. walletFundsChange
-             (findWallet 3)
-             (Ada.lovelaceValueOf (-5_000_000) <> assetClassValue token 5)
+          (Ada.lovelaceValueOf 0 <> assetClassValue token 1)
+    -- .&&. walletFundsChange
+    --          (findWallet 2)
+    --          (Ada.lovelaceValueOf 20_000_000 <> assetClassValue token 20)
+    -- .&&. walletFundsChange
+    --          (findWallet 3)
+    --          (Ada.lovelaceValueOf 5_000_000 <> assetClassValue token 5)
     )
     myTrace
 
@@ -65,7 +65,7 @@ emCfg = EmulatorConfig
     def
   where
     v :: Value
-    v = Ada.lovelaceValueOf 1_000_000_000 <> assetClassValue token 1000
+    v = Ada.lovelaceValueOf 11 <> assetClassValue token 1000   -- Initial Funds
 
 currency :: CurrencySymbol
 currency = "aa"
@@ -89,19 +89,19 @@ myTrace = do
             Extras.logInfo $ "started Service execution " ++ show se
             h1 <- activateContractWallet (findWallet 1) $ useEndpoints se
             h2 <- activateContractWallet (findWallet 2) $ useEndpoints se
-            h3 <- activateContractWallet (findWallet 3) $ useEndpoints se
+            -- h3 <- activateContractWallet (findWallet 3) $ useEndpoints se
 
-            callEndpoint @"set service price" h1 1_000_000
+            callEndpoint @"set service price" h1 1
             void $ Emulator.waitNSlots 5
 
-            callEndpoint @"claim fee" h1 100
-            void $ Emulator.waitNSlots 5
+            -- callEndpoint @"claim fee" h1 100
+            -- void $ Emulator.waitNSlots 5
 
             callEndpoint @"deposit funds" h2 20
             void $ Emulator.waitNSlots 5
 
-            callEndpoint @"withdraw unused" h3 5
-            void $ Emulator.waitNSlots 5
+            -- callEndpoint @"withdraw unused" h3 5
+            -- void $ Emulator.waitNSlots 5
 
 findWallet :: Integer -> Wallet
 findWallet num = fromWalletNumber $ WalletNumber num
