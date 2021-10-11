@@ -44,7 +44,7 @@ tests = checkPredicateOptions
     "service execution trace"
     (    walletFundsChange
           (findWallet 1)
-          (Ada.lovelaceValueOf 0 <> assetClassValue token 1)
+          (Ada.lovelaceValueOf 0 <> assetClassValue token 0)
     -- .&&. walletFundsChange
     --          (findWallet 2)
     --          (Ada.lovelaceValueOf 20_000_000 <> assetClassValue token 20)
