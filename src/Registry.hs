@@ -85,7 +85,7 @@ validateOrgId (HashedString actual) _ _ = True -- TODO: Don't allow if the org I
 listorg :: AsContractError e => Promise () RegistrySchema e ()
 listorg = endpoint @"listorg" @() $ \_ -> do
     logInfo @Haskell.String "Listing Organization..."
-    utxos <- utxoAt registryAddress
+    utxos <- utxosAt registryAddress
     -- let tx = collectFromScript utxos ()
     let orgId = fromMaybe ( hashString "Not Found") (findOrg utxos)
     logInfo  @Haskell.String $ "The orgId from on-chain is => " <> Haskell.show orgId <> "!!"
