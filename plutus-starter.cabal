@@ -109,7 +109,8 @@ executable plutus-starter-pab
     freer-simple -any,
     prettyprinter -any,
     freer-extras -any,
-    plutus-ledger -any
+    plutus-ledger -any,
+    openapi3 -any,
 
 executable compile-into-plutus
   import: lang

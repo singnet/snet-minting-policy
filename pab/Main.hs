@@ -1,33 +1,27 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DataKinds          #-}
+{-# LANGUAGE DeriveAnyClass     #-}
+{-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts   #-}
+{-# LANGUAGE LambdaCase         #-}
+{-# LANGUAGE RankNTypes         #-}
+{-# LANGUAGE TypeApplications   #-}
+{-# LANGUAGE TypeFamilies       #-}
+{-# LANGUAGE TypeOperators      #-}
 
-module Main(main) where
+module Main(main, writeCostingScripts) where
 
-import Control.Monad (void)
-import Control.Monad.Freer (interpret)
-import Control.Monad.IO.Class (MonadIO (..))
-import Data.Aeson
-  ( FromJSON (..),
-    Options (..),
-    ToJSON (..),
-    defaultOptions,
-    genericParseJSON,
-    genericToJSON,
-  )
-import Data.Default (def)
-import Data.Text.Prettyprint.Doc (Pretty (..), viaShow)
-import GHC.Generics (Generic)
-import OnChain.PrivateToken as PrivateToken
-import OnChain.SimpleMintingScript as SimpleMintingScript
-import Plutus.Contract (ContractError)
-import Plutus.PAB.Effects.Contract.Builtin (Builtin, BuiltinHandler (contractHandler), SomeBuiltin (..))
+import           Control.Monad                       (void)
+import           Control.Monad.Freer                 (interpret)
+import           Control.Monad.IO.Class              (MonadIO (..))
+import           Data.Aeson                          (FromJSON (..), ToJSON (..), genericToJSON, genericParseJSON
+                                                     , defaultOptions, Options(..))
+import           Data.Default                        (def)
+import qualified Data.OpenApi                        as OpenApi
+import           Data.Text.Prettyprint.Doc           (Pretty (..), viaShow)
+import           GHC.Generics                        (Generic)
+import           Plutus.Contract                     (ContractError)
+import           Plutus.PAB.Effects.Contract.Builtin (Builtin, SomeBuiltin (..), BuiltinHandler(contractHandler))
 import qualified Plutus.PAB.Effects.Contract.Builtin as Builtin
 -- import Registry
 -- import RegistryV2
@@ -77,15 +71,10 @@ main = void $
 --   putStrLn $ "ExBudget = " <> show exBudget
 
 
-data StarterContracts
-    -- = GameContract
-    -- VestingContract |
-    -- HelloWorldContract |
-    -- RegistryContract
-  -- | RegistryV2Contract
-  = SimpleMintingScriptContract
-  -- | PrivateTokenContract
-  deriving (Eq, Ord, Show, Generic)
+data StarterContracts =
+    GameContract
+    deriving (Eq, Ord, Show, Generic)
+    deriving anyclass OpenApi.ToSchema
 
 -- NOTE: Because 'StarterContracts' only has one constructor, corresponding to
 -- the demo 'Game' contract, we kindly ask aeson to still encode it as if it had
@@ -136,5 +125,7 @@ instance Builtin.HasDefinitions StarterContracts where
 
 handlers :: SimulatorEffectHandlers (Builtin StarterContracts)
 handlers =
-  Simulator.mkSimulatorHandlers def def $
-    interpret (contractHandler Builtin.handleBuiltin)
+    Simulator.mkSimulatorHandlers def def
+    $ interpret (contractHandler Builtin.handleBuiltin)
+
+
