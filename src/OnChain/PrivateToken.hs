@@ -10,8 +10,8 @@ module OnChain.PrivateToken
   ( 
     -- privateToken,
     -- mint,
-    MintingSchema,
-    MintParams (..),
+    -- MintingSchema,
+    -- MintParams (..),
     curSymbol,
     serialisedScript,
   )
@@ -76,13 +76,13 @@ serialisedScript owner = PlutusScriptSerialised . SBS.toShort $ LB.toStrict $ sc
 
 -- END : only for .plutus compilation
 
-data MintParams = MintParams
-  { mpTokenName :: TokenName,
-    mpAmount :: Integer
-  }
-  deriving (Show, Generic, FromJSON, ToJSON, ToSchema)
+-- data MintParams = MintParams
+--   { mpTokenName :: TokenName,
+--     mpAmount :: Integer
+--   }
+--   deriving (Show, Generic, FromJSON, ToJSON, ToSchema)
 
-type MintingSchema = Endpoint "mint" MintParams
+-- type MintingSchema = Endpoint "mint" MintParams
 
 -- owner :: PubKeyHash
 -- owner = "b4ddb46e5c9eff21ecfbe426feec1ae54712f16f31e993742a804030"
