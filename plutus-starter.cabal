@@ -52,6 +52,7 @@ library
       OnChain.PrivateToken 
       OnChain.MintingTokenWithOwner 
       StakingContract.StakingV1
+      OnChain.AGIXMintingPolicy
     build-depends:
       base >= 4.9 && < 5,
       aeson,

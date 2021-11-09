@@ -4,7 +4,7 @@ import Cardano.Api
 import Data.String
 import Ledger
 -- import Ledger.Crypto
-import OnChain.PrivateToken (serialisedScript)
+import OnChain.AGIXMintingPolicy (serialisedScript)
 import System.Environment (getArgs)
 import Prelude
 
