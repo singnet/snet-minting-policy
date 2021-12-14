@@ -27,5 +27,6 @@
         "!Select sequence",
         "!Split",
         "!Split sequence"
-    ]
+    ],
+    "haskell.formattingProvider": "stylish-haskell"
 }

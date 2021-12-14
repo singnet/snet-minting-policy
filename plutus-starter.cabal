@@ -52,6 +52,9 @@ library
       OnChain.PrivateToken 
       OnChain.MintingTokenWithOwner 
       StakingContract.StakingV1
+      OnChain.AGIXMintingPolicy
+      OnChain.AGIX2MintingPolicy
+      OnChain.AGIXMultiOwnerMintingPolicy
     build-depends:
       base >= 4.9 && < 5,
       aeson,
@@ -145,3 +148,16 @@ executable create-private-minting-policy
     cardano-api,
     plutus-starter,
     plutus-ledger
+
+executable create-multi-owner-policy
+  import: lang
+  main-is: CreateMultiOwnerPolicy.hs
+  hs-source-dirs: pab
+  ghc-options:
+    -threaded
+  build-depends:
+    base >= 4.9 && <5,
+    cardano-api,
+    plutus-starter,
+    plutus-ledger
+
