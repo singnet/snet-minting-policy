@@ -32,4 +32,4 @@ main = do
   putStrLn $ "owner2 => " ++ show owner2
   putStrLn $ "Token Name => " ++ show tName
   putStrLn $ "filename => " ++ show filename
-  createPlutusScript (fromString owner1) (fromString owner2) (fromString tName) filename
+  if owner1 /= owner2 then createPlutusScript (fromString owner1) (fromString owner2) (fromString tName) filename else error "Owner1 public hash can't be same as Owner2 public hash" 

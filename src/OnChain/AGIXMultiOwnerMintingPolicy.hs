@@ -23,7 +23,8 @@ import           Ledger.Value          as Value
 import qualified PlutusTx
 import           PlutusTx.Prelude      hiding (Semigroup (..), unless)
 import           Prelude               hiding (fst, snd, ($), (&&), (.), (<),
-                                        (<>), (==), (||))
+                                        (<>), (==), (||), (/=) )
+
 
 -- Cardano Team's Review
 -- "As long as we sign, we can mint as many tokens as we want, and those tokens can have arbitrary token names.
@@ -46,8 +47,8 @@ import           Prelude               hiding (fst, snd, ($), (&&), (.), (<),
 -- Minting Policy:
 -- The currency symbol is the hash of this script.
 {-# INLINEABLE mkPolicy #-}
-mkPolicy :: PubKeyHash -> PubKeyHash -> TokenName -> () -> ScriptContext -> Bool
-mkPolicy owner1 owner2 name () ctx = isCorrectToken && (isBurning || (isSignedByOwner1 && isSignedByOwner2))
+mkPolicy :: PubKeyHash -> PubKeyHash -> TokenName -> BuiltinData -> ScriptContext -> Bool
+mkPolicy owner1 owner2 name _redeemer ctx = isCorrectToken &&  (if isBurning then True else (isSignedByOwner1 && isSignedByOwner2 && (owner1 /= owner2 )))
   where
     info :: TxInfo
     info = scriptContextTxInfo ctx
